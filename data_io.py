@@ -335,24 +335,30 @@ def cal_Psepos(seqlist,PDB_DF_dir,Dataset_dir,psepos,ligand,seqanno):
     return
 
 def get_features_T5_XL_Uniref50(seqlist,seqanno,feature_dir,ligand,model_path, batch_size):
-    
+    print("Loading model .. ..")
     # Initialization
     tokenizer = T5Tokenizer.from_pretrained(model_path, do_lower_case=False )
     model = T5EncoderModel.from_pretrained(model_path)
+    print("Model loaded.")
+
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    print(device)
     model = model.to(device)
     model = model.eval()
-
+    
     print(get_gpu_memory_map())
     seqlist = [re.sub(r"[UZOB]", "X", sequence) for sequence in seqlist]
     
     
     features = {}
+    seq_count = len(seqlist)
+    print("# of sequences: ",seq_count)
 
-    for i in tqdm(range(int(len(seqlist)/batch_size)+1)):
+    for i in tqdm(range(int(seq_count/batch_size)+1)):
         low = int(batch_size)*i
-        high = min(int(batch_size)*(i+1), len(seqlist))
+        high = min(int(batch_size)*(i+1), seq_count)
 
+        print("Range:", low, ":", high)
         seq_batch_i = []
         for seqid in seqlist[low:high]:
             seq_batch_i.append(seqanno[seqid]["seq"])
