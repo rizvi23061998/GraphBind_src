@@ -127,6 +127,8 @@ def Create_NeighResidue3DPoint(psepos,dist,feature_dir,raw_dir,seqanno,feature_c
         residue_psepos = pickle.load(f)
     with open(feature_dir+'/'+ligand+'_residue_features_{}.pkl'.format(feature_combine),'rb') as f:
         residue_feas = pickle.load(f)
+    
+    print(residue_psepos[train_list[0]])
 
     for s, (dataset, seqlist) in enumerate(zip(['train', 'valid', 'test'],
                                              [train_list,valid_list, test_list])):
@@ -410,7 +412,7 @@ def get_features_protbert_bfd(seqlist,seqanno,feature_dir,ligand,model_path, bat
         low = int(batch_size)*i
         high = min(int(batch_size)*(i+1), seq_count)
 
-        print("Range:", low, ":", high)
+        # print("Range:", low, ":", high)
         seq_batch_i = []
         for seqid in seqlist[low:high]:
             seq_batch_i.append(seqanno[seqid]["seq"])
@@ -420,7 +422,7 @@ def get_features_protbert_bfd(seqlist,seqanno,feature_dir,ligand,model_path, bat
         input_ids = torch.tensor(ids['input_ids']).to(device)
         attention_mask = torch.tensor(ids['attention_mask']).to(device)
 
-        print(get_gpu_memory_map())
+        # print(get_gpu_memory_map())
 
         with torch.no_grad():
             embedding = model(input_ids=input_ids,attention_mask=attention_mask)[0]
@@ -434,6 +436,7 @@ def get_features_protbert_bfd(seqlist,seqanno,feature_dir,ligand,model_path, bat
 
     with open(feature_dir + "/"+ ligand + "_residue_features_protbert_bfd.pkl", "wb") as fp:
         pickle.dump(features, fp)
+        print("Feature Dumped to ",(feature_dir + "/"+ ligand + "_residue_features_protbert_bfd.pkl"))
 
     return
 
