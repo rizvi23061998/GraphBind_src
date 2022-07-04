@@ -16,6 +16,7 @@ from transformers import T5EncoderModel, T5Tokenizer
 import re
 import numpy as np
 import subprocess
+from transformers import BertModel, BertTokenizer
 
 
 
@@ -385,6 +386,56 @@ def get_features_T5_XL_Uniref50(seqlist,seqanno,feature_dir,ligand,model_path, b
 
     return
 
+def get_features_protbert_bfd(seqlist,seqanno,feature_dir,ligand,model_path, batch_size):
+    print("Loading model .. ..")
+    # Initialization
+    print("Model path:", model_path)
+    tokenizer = BertTokenizer.from_pretrained(model_path, do_lower_case=False )
+    model = BertModel.from_pretrained(model_path)
+    print("Model loaded.")
+
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    print(device)
+    model = model.to(device)
+    model = model.eval()
+    
+    print(get_gpu_memory_map())
+    seqlist = [re.sub(r"[UZOB]", "X", sequence) for sequence in seqlist]
+    
+    
+    features = {}
+    seq_count = len(seqlist)
+    print("# of sequences: ",seq_count)
+
+    for i in tqdm(range(int(seq_count/batch_size)+1)):
+        low = int(batch_size)*i
+        high = min(int(batch_size)*(i+1), seq_count)
+
+        print("Range:", low, ":", high)
+        seq_batch_i = []
+        for seqid in seqlist[low:high]:
+            seq_batch_i.append(seqanno[seqid]["seq"])
+
+        ids = tokenizer.batch_encode_plus(seq_batch_i, add_special_tokens=True, padding=True)
+        input_ids = torch.tensor(ids['input_ids']).to(device)
+        attention_mask = torch.tensor(ids['attention_mask']).to(device)
+
+        print(get_gpu_memory_map())
+
+        with torch.no_grad():
+            embedding = model(input_ids=input_ids,attention_mask=attention_mask)[0]
+        embedding = embedding.cpu().numpy()
+
+        
+        for seq_num in range(len(embedding)):
+            seq_len = (attention_mask[seq_num] == 1).sum()
+            seq_emd = embedding[seq_num][1:seq_len-1]
+            features[seqlist[low + seq_num]] = seq_emd
+
+    with open(feature_dir + "/"+ ligand + "_residue_features_protbert_bfd.pkl", "wb") as fp:
+        pickle.dump(features, fp)
+
+    return
 
 def tv_split(train_list,seed):
     random.seed(seed)
@@ -476,7 +527,8 @@ if __name__ == '__main__':
     PDB_chain_dir = Dataset_dir+'/PDB'
     feature_dir = os.path.abspath('..') + '/Features'
     # model_path = '../LM/prot_t5_xl_uniref50/'
-    model_path = "Rostlab/prot_t5_xl_uniref50"
+    # model_path = "Rostlab/prot_t5_xl_uniref50"
+    model_path = "../LM/prot_bert_bfd/"
     trainset_anno = Dataset_dir + '/{}'.format(trainingset_dict[ligand])
     testset_anno = Dataset_dir+'/{}'.format(testset_dict[ligand])
 
@@ -560,8 +612,9 @@ if __name__ == '__main__':
     # cal_DSSP(ligand, seqlist, Dataset_dir+'/feature/SS', Dataset_dir)
 
     # PDBResidueFeature(seqlist, PDB_DF_dir, Dataset_dir, ligand, feature_list,feature_combine,atomfea)
-    
-    get_features_T5_XL_Uniref50(seqlist,seqanno,feature_dir,ligand,model_path, fsteps)
+    feature_combine = "protbert_bfd"
+    # get_features_T5_XL_Uniref50(seqlist,seqanno,feature_dir,ligand,model_path, fsteps)
+    get_features_protbert_bfd(seqlist,seqanno,feature_dir,ligand,model_path, fsteps)
 
     root_dir = Dataset_dir + '/' + ligand + '_{}_dist{}_{}'.format(psepos, dist, feature_combine)
     raw_dir = root_dir + '/raw'
