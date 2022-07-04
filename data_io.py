@@ -431,6 +431,7 @@ def get_features_protbert_bfd(seqlist,seqanno,feature_dir,ligand,model_path, bat
         
         for seq_num in range(len(embedding)):
             seq_len = (attention_mask[seq_num] == 1).sum()
+            print(seq_len)
             seq_emd = embedding[seq_num][1:seq_len-1]
             features[seqlist[low + seq_num]] = seq_emd
             print(seq_emd.shape)
