@@ -32,7 +32,7 @@ def parse_args():
                         help="Transfer binding annotations for DNA-(RNA-)binding protein training data sets or not.")
     parser.add_argument("--tvseed", dest='tvseed',type=int, default=1995, help='The random seed used to separate the validation set from training set.')
     parser.add_argument("--fsteps", dest='fsteps',type=int, default=128, help='Batch size during featurization with LM model.')
-    parser.add_argument("--featurize_only", dest='fonly', type=bool, default=True, help='Only featurize. Default is True.')
+    parser.add_argument("--fonly", dest='fonly', type=bool, default=True, help='Only featurize. Default is True.')
     return parser.parse_args()
 
 def checkargs(args):
@@ -125,7 +125,7 @@ class NeighResidue3DPoint(InMemoryDataset):
 def Create_NeighResidue3DPoint(psepos,dist,feature_dir,raw_dir,seqanno,feature_combine,train_list,valid_list,test_list):
     with open(feature_dir + '/' + ligand + '_psepos_{}.pkl'.format(psepos), 'rb') as f:
         residue_psepos = pickle.load(f)
-    with open(feature_dir+'/'+ligand+'_residue_feas_{}.pkl'.format(feature_combine),'rb') as f:
+    with open(feature_dir+'/'+ligand+'_residue_features_{}.pkl'.format(feature_combine),'rb') as f:
         residue_feas = pickle.load(f)
 
     for s, (dataset, seqlist) in enumerate(zip(['train', 'valid', 'test'],
