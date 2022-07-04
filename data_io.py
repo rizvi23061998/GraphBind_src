@@ -418,6 +418,7 @@ def get_features_protbert_bfd(seqlist,seqanno,feature_dir,ligand,model_path, bat
             seq_batch_i.append(seqanno[seqid]["seq"])
 
         seq_batch_i = [re.sub(r"[UZOB]", "X", sequence) for sequence in seq_batch_i]
+        print(seq_batch_i[0])
         ids = tokenizer.batch_encode_plus(seq_batch_i, add_special_tokens=True, padding=True)
         input_ids = torch.tensor(ids['input_ids']).to(device)
         attention_mask = torch.tensor(ids['attention_mask']).to(device)
