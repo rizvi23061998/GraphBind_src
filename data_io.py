@@ -525,7 +525,7 @@ if __name__ == '__main__':
 
     Dataset_dir = os.path.abspath('..')+'/Datasets'+'/'+ligand
     PDB_chain_dir = Dataset_dir+'/PDB'
-    feature_dir = os.path.abspath('..') + '/Features'
+    feature_dir = Dataset_dir 
     # model_path = '../LM/prot_t5_xl_uniref50/'
     # model_path = "Rostlab/prot_t5_xl_uniref50"
     model_path = "../LM/prot_bert_bfd/"
