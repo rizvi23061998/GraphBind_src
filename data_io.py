@@ -475,7 +475,8 @@ if __name__ == '__main__':
     Dataset_dir = os.path.abspath('..')+'/Datasets'+'/'+ligand
     PDB_chain_dir = Dataset_dir+'/PDB'
     feature_dir = os.path.abspath('..') + '/Features'
-    model_path = '../LM/prot_t5_xl_uniref50/'
+    # model_path = '../LM/prot_t5_xl_uniref50/'
+    model_path = "Rostlab/prot_t5_xl_uniref50"
     trainset_anno = Dataset_dir + '/{}'.format(trainingset_dict[ligand])
     testset_anno = Dataset_dir+'/{}'.format(testset_dict[ligand])
 
