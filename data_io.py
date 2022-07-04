@@ -417,8 +417,9 @@ def get_features_protbert_bfd(seqlist,seqanno,feature_dir,ligand,model_path, bat
         for seqid in seqlist[low:high]:
             seq_batch_i.append(seqanno[seqid]["seq"])
 
+        seq_batch_i = [" ".join(sequence) for sequence in seq_batch_i]
         seq_batch_i = [re.sub(r"[UZOB]", "X", sequence) for sequence in seq_batch_i]
-        print(seq_batch_i[0])
+        # print(seq_batch_i[0])
         ids = tokenizer.batch_encode_plus(seq_batch_i, add_special_tokens=True, padding=True)
         input_ids = torch.tensor(ids['input_ids']).to(device)
         attention_mask = torch.tensor(ids['attention_mask']).to(device)
@@ -432,10 +433,10 @@ def get_features_protbert_bfd(seqlist,seqanno,feature_dir,ligand,model_path, bat
         
         for seq_num in range(len(embedding)):
             seq_len = (attention_mask[seq_num] == 1).sum()
-            print(seq_len)
+            # print(seq_len)
             seq_emd = embedding[seq_num][1:seq_len-1]
             features[seqlist[low + seq_num]] = seq_emd
-            print(seq_emd.shape)
+            # print(seq_emd.shape)
 
     with open(feature_dir + "/"+ ligand + "_residue_features_protbert_bfd.pkl", "wb") as fp:
         pickle.dump(features, fp)
