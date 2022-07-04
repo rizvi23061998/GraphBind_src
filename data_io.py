@@ -337,6 +337,7 @@ def cal_Psepos(seqlist,PDB_DF_dir,Dataset_dir,psepos,ligand,seqanno):
 def get_features_T5_XL_Uniref50(seqlist,seqanno,feature_dir,ligand,model_path, batch_size):
     print("Loading model .. ..")
     # Initialization
+    print("Model path:", model_path)
     tokenizer = T5Tokenizer.from_pretrained(model_path, do_lower_case=False )
     model = T5EncoderModel.from_pretrained(model_path)
     print("Model loaded.")
@@ -474,7 +475,7 @@ if __name__ == '__main__':
     Dataset_dir = os.path.abspath('..')+'/Datasets'+'/'+ligand
     PDB_chain_dir = Dataset_dir+'/PDB'
     feature_dir = os.path.abspath('..') + '/Features'
-    model_path = os.path.abspath('..') + '/LM/prot_t5_xl_uniref50/'
+    model_path = '../LM/prot_t5_xl_uniref50/'
     trainset_anno = Dataset_dir + '/{}'.format(trainingset_dict[ligand])
     testset_anno = Dataset_dir+'/{}'.format(testset_dict[ligand])
 
