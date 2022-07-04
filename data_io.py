@@ -400,7 +400,6 @@ def get_features_protbert_bfd(seqlist,seqanno,feature_dir,ligand,model_path, bat
     model = model.eval()
     
     print(get_gpu_memory_map())
-    seqlist = [re.sub(r"[UZOB]", "X", sequence) for sequence in seqlist]
     
     
     features = {}
@@ -416,6 +415,7 @@ def get_features_protbert_bfd(seqlist,seqanno,feature_dir,ligand,model_path, bat
         for seqid in seqlist[low:high]:
             seq_batch_i.append(seqanno[seqid]["seq"])
 
+        seq_batch_i = [re.sub(r"[UZOB]", "X", sequence) for sequence in seq_batch_i]
         ids = tokenizer.batch_encode_plus(seq_batch_i, add_special_tokens=True, padding=True)
         input_ids = torch.tensor(ids['input_ids']).to(device)
         attention_mask = torch.tensor(ids['attention_mask']).to(device)
