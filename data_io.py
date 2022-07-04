@@ -128,7 +128,7 @@ def Create_NeighResidue3DPoint(psepos,dist,feature_dir,raw_dir,seqanno,feature_c
     with open(feature_dir+'/'+ligand+'_residue_features_{}.pkl'.format(feature_combine),'rb') as f:
         residue_feas = pickle.load(f)
     
-    print(residue_psepos[train_list[0]])
+    # print(residue_psepos[train_list[0]])
 
     for s, (dataset, seqlist) in enumerate(zip(['train', 'valid', 'test'],
                                              [train_list,valid_list, test_list])):
@@ -427,16 +427,18 @@ def get_features_protbert_bfd(seqlist,seqanno,feature_dir,ligand,model_path, bat
         with torch.no_grad():
             embedding = model(input_ids=input_ids,attention_mask=attention_mask)[0]
         embedding = embedding.cpu().numpy()
-
+        print((embedding.shape))
         
         for seq_num in range(len(embedding)):
             seq_len = (attention_mask[seq_num] == 1).sum()
             seq_emd = embedding[seq_num][1:seq_len-1]
             features[seqlist[low + seq_num]] = seq_emd
+            print(seq_emd.shape)
 
     with open(feature_dir + "/"+ ligand + "_residue_features_protbert_bfd.pkl", "wb") as fp:
         pickle.dump(features, fp)
         print("Feature Dumped to ",(feature_dir + "/"+ ligand + "_residue_features_protbert_bfd.pkl"))
+        print("Length of features: ", len(features))
 
     return
 
@@ -597,7 +599,7 @@ if __name__ == '__main__':
     PDB_DF_dir = Dataset_dir+'/PDB_DF'
     seqlist = train_list + valid_list + test_list
 
-    if not fonly:
+    if fonly == False:
         print('1.Extract the PDB information.')
         cal_PDBDF(seqlist, PDB_chain_dir, PDB_DF_dir)
         print('2.calculate the pseudo positions.')
