@@ -17,6 +17,7 @@ import re
 import numpy as np
 import subprocess
 from transformers import BertModel, BertTokenizer
+from pympler import asizeof
 
 
 
@@ -32,7 +33,7 @@ def parse_args():
                         help="Transfer binding annotations for DNA-(RNA-)binding protein training data sets or not.")
     parser.add_argument("--tvseed", dest='tvseed',type=int, default=1995, help='The random seed used to separate the validation set from training set.')
     parser.add_argument("--fsteps", dest='fsteps',type=int, default=128, help='Batch size during featurization with LM model.')
-    parser.add_argument("--fonly", dest='fonly', type=bool, default=True, help='Only featurize. Default is True.')
+    parser.add_argument("--tasks", dest='tasks', default="1,2,3,4", help='Tasks needed to be done. ')
     return parser.parse_args()
 
 def checkargs(args):
@@ -50,7 +51,11 @@ def checkargs(args):
     if args.context_radius<=0:
         print('ERROR: radius of structure context should be positive!')
         raise ValueError
-
+    tasks = args.tasks.strip().split(',')
+    for task in tasks:
+        if int(task) not in [1,2,3,4]:
+            print('ERROR: task {} is not supported by GraphBind-LM!'.format(task))
+            raise ValueError    
     return
 
 def get_gpu_memory_map():
@@ -134,14 +139,18 @@ def Create_NeighResidue3DPoint(psepos,dist,feature_dir,raw_dir,seqanno,feature_c
                                              [train_list,valid_list, test_list])):
         print("Calculating neighbourhood for ", dataset, " dataset.")
         data_dict = {}
-        for seq in (seqlist):
-            print("Calculating neighbourhood for ", seq, " ...")
+        count = 0
+        total_len = len(seqlist)
+        batch_no = 1
+        batch_size = 100
+        for seq in tqdm(seqlist):
+            # print("Calculating neighbourhood for ", seq, " ...")
             seq_data = []
             feas = residue_feas[seq]
             pos = residue_psepos[seq]
             label = np.array(list(map(int, list(seqanno[seq]['anno']))))
 
-            print(get_gpu_memory_map())
+            # print("Size of list: ", asizeof.asizeof(data_dict)/1024.0/1024.0)
             for i in range(len(label)):
                 res_psepos = pos[i]
                 res_dist = np.sqrt(np.sum((pos-res_psepos)**2,axis=1))
@@ -159,8 +168,15 @@ def Create_NeighResidue3DPoint(psepos,dist,feature_dir,raw_dir,seqanno,feature_c
                 seq_data.append(res_data)
             
             data_dict[seq] = seq_data
-        with open(raw_dir + '/{}_data.pkl'.format(dataset), 'wb') as f:
-            pickle.dump([data_dict, seqlist], f)
+            count += 1
+            if (batch_no*batch_size )== count or count == total_len:
+                with open(raw_dir + '/{}_data_batch{}.pkl'.format(dataset,batch_no), 'wb') as f:
+                    pickle.dump([data_dict, seqlist], f)
+                    data_dict = {}
+                batch_no += 1
+
+        # with open(raw_dir + '/{}_data.pkl'.format(dataset), 'wb') as f:
+        #     pickle.dump([data_dict, seqlist], f)
 
     return
 
@@ -441,6 +457,10 @@ def get_features_protbert_bfd(seqlist,seqanno,feature_dir,ligand,model_path, bat
             seq_emd = embedding[seq_num][1:seq_len-1]
             features[seqlist[low + seq_num]] = seq_emd
             # print(seq_emd.shape)
+        
+        del embedding
+        del input_ids
+        del attention_mask
 
     with open(feature_dir + "/"+ ligand + "_residue_features_protbert_bfd.pkl", "wb") as fp:
         pickle.dump(features, fp)
@@ -496,8 +516,8 @@ if __name__ == '__main__':
     trans_anno = args.trans_anno
     dist = args.context_radius
     fsteps = args.fsteps
-    fonly = args.fonly
-    print("Featurize only: ", fonly)
+    tasks = args.tasks.strip().split(',')
+    print("Tasks: ", tasks)
 
     feature_list = []
     feature_combine = ''
@@ -607,33 +627,36 @@ if __name__ == '__main__':
     PDB_DF_dir = Dataset_dir+'/PDB_DF'
     seqlist = train_list + valid_list + test_list
 
-    if not fonly:
+    if '1' in tasks:
         print('1.Extract the PDB information.')
         cal_PDBDF(seqlist, PDB_chain_dir, PDB_DF_dir)
+    if '2' in tasks: 
         print('2.calculate the pseudo positions.')
         cal_Psepos(seqlist,PDB_DF_dir,Dataset_dir,psepos,ligand,seqanno)
-    
-    print('3.calculate the residue features.')
-    if 'AF' in feature_list:
-        atomfea = True
-        feature_list.remove('AF')
-    else:
-        atomfea = False
+    if '3' in tasks:
+        print('3.calculate the residue features.')
+        if 'AF' in feature_list:
+            atomfea = True
+            feature_list.remove('AF')
+        else:
+            atomfea = False
 
-    # cal_PSSM(ligand, seqlist, Dataset_dir+'/feature/PSSM', Dataset_dir)
-    # cal_HMM(ligand, seqlist, Dataset_dir+'/feature/HMM', Dataset_dir)
-    # cal_DSSP(ligand, seqlist, Dataset_dir+'/feature/SS', Dataset_dir)
+        # cal_PSSM(ligand, seqlist, Dataset_dir+'/feature/PSSM', Dataset_dir)
+        # cal_HMM(ligand, seqlist, Dataset_dir+'/feature/HMM', Dataset_dir)
+        # cal_DSSP(ligand, seqlist, Dataset_dir+'/feature/SS', Dataset_dir)
 
-    # PDBResidueFeature(seqlist, PDB_DF_dir, Dataset_dir, ligand, feature_list,feature_combine,atomfea)
-    feature_combine = "protbert_bfd"
-    # get_features_T5_XL_Uniref50(seqlist,seqanno,feature_dir,ligand,model_path, fsteps)
-    get_features_protbert_bfd(seqlist,seqanno,feature_dir,ligand,model_path, fsteps)
+        # PDBResidueFeature(seqlist, PDB_DF_dir, Dataset_dir, ligand, feature_list,feature_combine,atomfea)
+        feature_combine = "protbert_bfd"
+        # get_features_T5_XL_Uniref50(seqlist,seqanno,feature_dir,ligand,model_path, fsteps)
+        get_features_protbert_bfd(seqlist,seqanno,feature_dir,ligand,model_path, fsteps)
 
-    root_dir = Dataset_dir + '/' + ligand + '_{}_dist{}_{}'.format(psepos, dist, feature_combine)
-    raw_dir = root_dir + '/raw'
-    if os.path.exists(raw_dir):
-        shutil.rmtree(root_dir)
-    os.makedirs(raw_dir)
-    print('4.Calculate the neighborhood of residues. Save to {}.'.format(root_dir))
-    Create_NeighResidue3DPoint(psepos,dist,Dataset_dir,raw_dir,seqanno,feature_combine,train_list,valid_list,test_list)
-    _ = NeighResidue3DPoint(root=root_dir,dataset='train')
+    if '4' in tasks:
+        root_dir = Dataset_dir + '/' + ligand + '_{}_dist{}_{}'.format(psepos, dist, feature_combine)
+        raw_dir = root_dir + '/raw'
+        if os.path.exists(raw_dir):
+            shutil.rmtree(root_dir)
+        os.makedirs(raw_dir)
+        feature_combine = "protbert_bfd"
+        print('4.Calculate the neighborhood of residues. Save to {}.'.format(root_dir))
+        Create_NeighResidue3DPoint(psepos,dist,Dataset_dir,raw_dir,seqanno,feature_combine,train_list,valid_list,test_list)
+        _ = NeighResidue3DPoint(root=root_dir,dataset='train')
