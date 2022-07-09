@@ -134,7 +134,7 @@ def Create_NeighResidue3DPoint(psepos,dist,feature_dir,raw_dir,seqanno,feature_c
                                              [train_list,valid_list, test_list])):
         print("Calculating neighbourhood for ", dataset, " dataset.")
         data_dict = {}
-        for seq in tqdm(seqlist):
+        for seq in (seqlist):
             print("Calculating neighbourhood for ", seq, " ...")
             seq_data = []
             feas = residue_feas[seq]
