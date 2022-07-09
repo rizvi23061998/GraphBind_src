@@ -141,6 +141,7 @@ def Create_NeighResidue3DPoint(psepos,dist,feature_dir,raw_dir,seqanno,feature_c
             pos = residue_psepos[seq]
             label = np.array(list(map(int, list(seqanno[seq]['anno']))))
 
+            print(get_gpu_memory_map())
             for i in range(len(label)):
                 res_psepos = pos[i]
                 res_dist = np.sqrt(np.sum((pos-res_psepos)**2,axis=1))
