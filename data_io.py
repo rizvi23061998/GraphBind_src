@@ -132,8 +132,10 @@ def Create_NeighResidue3DPoint(psepos,dist,feature_dir,raw_dir,seqanno,feature_c
 
     for s, (dataset, seqlist) in enumerate(zip(['train', 'valid', 'test'],
                                              [train_list,valid_list, test_list])):
+        print("Calculating neighbourhood for ", dataset, " dataset.")
         data_dict = {}
         for seq in tqdm(seqlist):
+            print("Calculating neighbourhood for ", seq, " ...")
             seq_data = []
             feas = residue_feas[seq]
             pos = residue_psepos[seq]
@@ -154,6 +156,7 @@ def Create_NeighResidue3DPoint(psepos,dist,feature_dir,raw_dir,seqanno,feature_c
                             'label': res_label.astype('float32'),
                             'neigh_index':neigh_index.astype('int32')}
                 seq_data.append(res_data)
+            
             data_dict[seq] = seq_data
         with open(raw_dir + '/{}_data.pkl'.format(dataset), 'wb') as f:
             pickle.dump([data_dict, seqlist], f)
@@ -429,7 +432,7 @@ def get_features_protbert_bfd(seqlist,seqanno,feature_dir,ligand,model_path, bat
         with torch.no_grad():
             embedding = model(input_ids=input_ids,attention_mask=attention_mask)[0]
         embedding = embedding.cpu().numpy()
-        print((embedding.shape))
+        # print((embedding.shape))
         
         for seq_num in range(len(embedding)):
             seq_len = (attention_mask[seq_num] == 1).sum()
@@ -493,6 +496,7 @@ if __name__ == '__main__':
     dist = args.context_radius
     fsteps = args.fsteps
     fonly = args.fonly
+    print("Featurize only: ", fonly)
 
     feature_list = []
     feature_combine = ''
@@ -602,7 +606,7 @@ if __name__ == '__main__':
     PDB_DF_dir = Dataset_dir+'/PDB_DF'
     seqlist = train_list + valid_list + test_list
 
-    if fonly == False:
+    if not fonly:
         print('1.Extract the PDB information.')
         cal_PDBDF(seqlist, PDB_chain_dir, PDB_DF_dir)
         print('2.calculate the pseudo positions.')
