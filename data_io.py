@@ -142,7 +142,7 @@ def Create_NeighResidue3DPoint(psepos,dist,feature_dir,raw_dir,seqanno,feature_c
         count = 0
         total_len = len(seqlist)
         batch_no = 1
-        batch_size = 80
+        batch_size = 50
         for seq in tqdm(seqlist):
             # print("Calculating neighbourhood for ", seq, " ...")
             seq_data = []
@@ -170,7 +170,7 @@ def Create_NeighResidue3DPoint(psepos,dist,feature_dir,raw_dir,seqanno,feature_c
             data_dict[seq] = seq_data
             count += 1
             if (batch_no*batch_size )== count or count == total_len:
-                print("Size of list: ", asizeof.asizeof(data_dict)/1024.0/1024.0)
+                print("Size of list and dictionary: ", asizeof.asizeof(seqlist)/1024.0/1024.0, ", ",asizeof.asizeof(data_dict)/1024.0/1024.0)
                 with open(raw_dir + '/{}_data_batch{}.pkl'.format(dataset,batch_no), 'wb') as f:
                     pickle.dump([data_dict, seqlist], f)
                     data_dict = {}
