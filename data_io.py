@@ -142,7 +142,7 @@ def Create_NeighResidue3DPoint(psepos,dist,feature_dir,raw_dir,seqanno,feature_c
         count = 0
         total_len = len(seqlist)
         batch_no = 1
-        batch_size = 50
+        batch_size = 30
         for seq in tqdm(seqlist):
             # print("Calculating neighbourhood for ", seq, " ...")
             seq_data = []
